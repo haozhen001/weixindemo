@@ -1,47 +1,40 @@
 package com.haozhen.service.distribute;
 
+import java.util.List;
+
 import javax.websocket.Session;
 
 /**
- * ÓÃÓÚ·Ö·¢ÏûÏ¢µÄ·şÎñ
+ * ï¿½ï¿½ï¿½Ú·Ö·ï¿½ï¿½ï¿½Ï¢ï¿½Ä·ï¿½ï¿½ï¿½
  * @author haozhen
  *
  */
 public interface InformationDistributionService {
+	
+	
+	public void reConnectNewServer(String oldServeruserid);
+	
+	public void setConnectWithClient(String clientuserid);
 
-	/**
-	 * Ñ¡ÔñÒ»¸ö¿Í·ş»Ø»°
-	 * @return
-	 */
-	public Session selectOneServerSession();
+	public String selectOneServer();
+	
+
+	public void clientSendMessage(String userid,String message);
 	
 	/**
-	 * ¿Í»§·¢ËÍÏûÏ¢
-	 * @param client
-	 * @param message
-	 */
-	public void clientSendMessage(Session client,String message);
-	
-	/**
-	 * »ñÈ¡¿Í·ş¶Ô»°µÄ¿Í»§session ÓÃÓÚÖ§³ÖÒ»¶Ô¶àµÄ·¢ËÍÏûÏ¢
+	 * ï¿½ï¿½È¡ï¿½Í·ï¿½ï¿½Ô»ï¿½ï¿½Ä¿Í»ï¿½session ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ï¿½Ò»ï¿½Ô¶ï¿½Ä·ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
 	 * @param server
 	 * @param clientId
 	 * @return
 	 */
-	public Session getClientSession(Session server,String clientId);
+	public void getClientSession(String serveruserid,String clientuserid);
+	
 	
 	/**
-	 * ¿Í·ş»ñÈ¡¶Ô»°µÄ¿Í·şsession
-	 * @param server
-	 * @return
-	 */
-	public Session getClientSession(Session server);
-	
-	/**
-	 * ¿Í·ş·¢ËÍÏûÏ¢
+	 * ï¿½Í·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
 	 * @param server
 	 * @param message
 	 */
-	public void serverSendMessage(Session server,String message);
+	public void serverSendMessage(String serveruserid,String message);
 	
 }

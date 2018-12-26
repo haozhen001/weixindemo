@@ -1,7 +1,8 @@
 package com.haozhen.websocket.endpoint;
 
-import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -12,83 +13,130 @@ import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.google.gson.Gson;
+import com.haozhen.service.distribute.InformationDistributionService;
+import com.haozhen.service.distribute.model.ServerMessage;
+import com.haozhen.service.distribute.model.UserSequency;
+import com.haozhen.service.distribute.util.DistributionUtil;
+import com.haozhen.service.distribute.util.GsonUtil;
+
 @Component
-@ServerEndpoint("/weChat/{role}")
+@ServerEndpoint("/weChat/{role}/{userid}")
 public class ChatInformationEndpoint {
 
 	/**
-     * ÔÚÏßÈËÊı
+     * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
      */
     public static int onlineNumber = 0;
+    
+    public static InformationDistributionService distributionService;
+    
+    
+    public static InformationDistributionService getDistributionService() {
+		return distributionService;
+	}
+    @Autowired
+	public static void setDistributionService(InformationDistributionService distributionService) {
+		ChatInformationEndpoint.distributionService = distributionService;
+	}
 
     /**
-     * ËùÓĞµÄ¶ÔÏó
-     */
-    public static List<Session> clientSession = new CopyOnWriteArrayList<Session>();
-
-    public static List<Session> serverSession = new CopyOnWriteArrayList<Session>();
-    /**
-     * ½¨Á¢Á¬½Ó
-     *
+     * æ‰“å¼€è¿æ¥
      * @param session
+     * @param role
+     * @param userid
      */
     @OnOpen
-    public void onOpen(Session session,@PathParam("role")String role)
+    public void onOpen(Session session,@PathParam("role")String role,@PathParam("userid")String userid)
     {
         onlineNumber++;
-        if(Objects.equals(role, "client")) {
-        	clientSession.add(session);
-        }else if(Objects.equals(role, "server")){
-        	serverSession.add(session);
+        List<Session> sessions = getSessions(role, userid);
+        //æ·»åŠ session
+        sessions.add(session);
+        if(Objects.equals("server", role)) {
+        	//æ·»åŠ å®¢æœ æ‰¿è¼‰æ•°
+        	addServerChatNum(role,userid);
+        }else if(Objects.equals("client", role)) {
+        	//ä¸ºå®¢æˆ·é€‰æ‹©å®¢æœ
+        	distributionService.setConnectWithClient(userid);
         }
-        System.out.println("ÓĞĞÂÁ¬½Ó¼ÓÈë£¡ µ±Ç°ÔÚÏßÈËÊı" + onlineNumber);
+        System.out.println("å»ºç«‹ä¸€æ¡æ–°çš„è¿æ¥ï¼š å½“å‰è¿æ¥æ•°" + onlineNumber);
+    }
+    
+    private void addServerChatNum(String role, String userid) {
+    	if(Objects.equals("server", role)) {
+    		if(!DistributionUtil.serverSessionSequency.contains(userid)) {
+    			UserSequency userSequency = new UserSequency();
+    			DistributionUtil.serverSessionSequency.add(userSequency);
+    		}
+    	}
+	}
+    private void revomeServerChat(String role, String userid) {
+    	if(Objects.equals("client", role)) {
+    		String serveruserid = DistributionUtil.clientToServer.get(userid);
+    		if(DistributionUtil.serverSessionSequency.contains(serveruserid)) {
+    			UserSequency userSequency = DistributionUtil.serverSessionSequency.get(serveruserid);
+    			userSequency.getNum().decrementAndGet();
+    		}
+    	}else if(Objects.equals("server", role)) {
+    		if(DistributionUtil.serverSessionSequency.contains(userid)) {
+    			DistributionUtil.serverSessionSequency.remove(userid);
+    		}
+    	}
+	}
+	private List<Session> getSessions(String role,String userid){
+    	List<Session> sessions = null;
+        if(Objects.equals(role, "client")) {
+        	if(DistributionUtil.clientSession.containsKey(userid)) {
+        		sessions = new CopyOnWriteArrayList<Session>();
+        		DistributionUtil.clientSession.putIfAbsent(userid, sessions);
+        	}else {
+        		sessions = DistributionUtil.clientSession.get(userid);
+        	}
+        }else if(Objects.equals(role, "server")){
+        	if(DistributionUtil.serverSession.containsKey(userid)) {
+        		sessions = new CopyOnWriteArrayList<Session>();
+        		DistributionUtil.serverSession.putIfAbsent(userid, sessions);
+        	}else {
+        		sessions = DistributionUtil.serverSession.get(userid);
+        	}
+        }
+        return sessions;
     }
 
-    /**
-     * Á¬½Ó¹Ø±Õ
-     */
     @OnClose
-    public void onClose(Session session,@PathParam("role")String role)
+    public void onClose(Session session,@PathParam("role")String role,@PathParam("userid")String userid)
     {
         onlineNumber--;
+        List<Session> sessions = getSessions(role, userid);
+        sessions.remove(session);
+        revomeServerChat(role, userid);
         if(Objects.equals(role, "client")) {
-        	clientSession.remove(session);
-        }else if(Objects.equals(role, "server")){
-        	serverSession.remove(session);
+        	DistributionUtil.clientToServer.remove(userid);
+        }else if(Objects.equals(role, "server")) {
+        	distributionService.reConnectNewServer(userid);
         }
-        System.out.println("ÓĞÁ¬½Ó¹Ø±Õ£¡ µ±Ç°ÔÚÏßÈËÊı" + onlineNumber);
+        System.out.println("å…³é—­ä¸€æ¡è¿æ¥ å½“å‰è¿æ¥æ•°" + onlineNumber);
     }
 
     /**
-     * ÊÕµ½¿Í»§¶ËµÄÏûÏ¢
+     * ï¿½Õµï¿½ï¿½Í»ï¿½ï¿½Ëµï¿½ï¿½ï¿½Ï¢
      *
-     * @param message ÏûÏ¢
-     * @param session »á»°
+     * @param message ï¿½ï¿½Ï¢
+     * @param session ï¿½á»°
      */
     @OnMessage
-    public void onMessage(String message, Session session)
+    public void onMessage(String message, Session session,@PathParam("role")String role,@PathParam("userid")String userid)
     {
-        System.out.println("À´×Ô¿Í»§¶ËÏûÏ¢£º" + message);
-
-        sendMessage("»¶Ó­Á¬½Ó");
-    }
-
-    /**
-     * ·¢ËÍÏûÏ¢
-     *
-     * @param message ÏûÏ¢
-     */
-    public void sendMessage(String message)
-    {
-        try
-        {
-            session.getBasicRemote().sendText(message);
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
+    	if(Objects.equals(role, "client")) {
+    		distributionService.clientSendMessage(userid, message);
+        }else if(Objects.equals(role, "server")) {
+        	ServerMessage serverMessage = GsonUtil.getGson().fromJson(message, ServerMessage.class);
+        	distributionService.serverSendMessage(serverMessage.getUserid(), serverMessage.getMessage());
         }
     }
+
 }
