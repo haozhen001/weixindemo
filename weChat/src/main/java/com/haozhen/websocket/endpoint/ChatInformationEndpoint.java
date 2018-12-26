@@ -41,7 +41,7 @@ public class ChatInformationEndpoint {
 	}
 
     /**
-     * 打开连接
+     	* 打开连接
      * @param session
      * @param role
      * @param userid
@@ -121,12 +121,6 @@ public class ChatInformationEndpoint {
         System.out.println("关闭一条连接 当前连接数" + onlineNumber);
     }
 
-    /**
-     * �յ��ͻ��˵���Ϣ
-     *
-     * @param message ��Ϣ
-     * @param session �Ự
-     */
     @OnMessage
     public void onMessage(String message, Session session,@PathParam("role")String role,@PathParam("userid")String userid)
     {
