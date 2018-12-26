@@ -27,9 +27,6 @@ import com.haozhen.service.distribute.util.GsonUtil;
 @ServerEndpoint("/weChat/{role}/{userid}")
 public class ChatInformationEndpoint {
 
-	/**
-     * ��������
-     */
     public static int onlineNumber = 0;
     
     public static InformationDistributionService distributionService;
@@ -78,8 +75,10 @@ public class ChatInformationEndpoint {
     	if(Objects.equals("client", role)) {
     		String serveruserid = DistributionUtil.clientToServer.get(userid);
     		if(DistributionUtil.serverSessionSequency.contains(serveruserid)) {
-    			UserSequency userSequency = DistributionUtil.serverSessionSequency.get(serveruserid);
-    			userSequency.getNum().decrementAndGet();
+    			for(UserSequency userSequency:DistributionUtil.serverSessionSequency) {
+    				if(Objects.equals(serveruserid, userSequency.getUserid()))
+    					userSequency.getNum().decrementAndGet();
+    			}
     		}
     	}else if(Objects.equals("server", role)) {
     		if(DistributionUtil.serverSessionSequency.contains(userid)) {
