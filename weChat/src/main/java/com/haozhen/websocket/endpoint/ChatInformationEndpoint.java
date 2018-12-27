@@ -32,6 +32,7 @@ public class ChatInformationEndpoint {
     public static InformationDistributionService distributionService;
     
     
+    
     public static InformationDistributionService getDistributionService() {
 		return distributionService;
 	}
