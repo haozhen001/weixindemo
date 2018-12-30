@@ -1,8 +1,6 @@
 package com.haozhen.websocket.endpoint;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -16,11 +14,9 @@ import javax.websocket.server.ServerEndpoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.google.gson.Gson;
 import com.haozhen.service.distribute.InformationDistributionService;
 import com.haozhen.service.distribute.model.ServerMessage;
 import com.haozhen.service.distribute.model.UserSequency;
-import com.haozhen.service.distribute.util.DistributionUtil;
 import com.haozhen.service.distribute.util.GsonUtil;
 
 @Component
@@ -32,12 +28,8 @@ public class ChatInformationEndpoint {
     public static InformationDistributionService distributionService;
     
     
-    
-    public static InformationDistributionService getDistributionService() {
-		return distributionService;
-	}
     @Autowired
-	public static void setDistributionService(InformationDistributionService distributionService) {
+	public void setDistributionService(InformationDistributionService distributionService) {
 		ChatInformationEndpoint.distributionService = distributionService;
 	}
 
@@ -51,85 +43,40 @@ public class ChatInformationEndpoint {
     public void onOpen(Session session,@PathParam("role")String role,@PathParam("userid")String userid)
     {
         onlineNumber++;
-        List<Session> sessions = getSessions(role, userid);
-        //添加session
-        sessions.add(session);
+        String roleName = null;
         if(Objects.equals("server", role)) {
-        	//添加客服 承載数
-        	addServerChatNum(role,userid);
+        	roleName = "客服人员";
+        	distributionService.serverConnect(userid, session);
         }else if(Objects.equals("client", role)) {
-        	//为客户选择客服
-        	distributionService.setConnectWithClient(userid);
+        	roleName = "客户人员";
+        	distributionService.clientConnect(userid, session);
         }
-        System.out.println("建立一条新的连接： 当前连接数" + onlineNumber);
+        System.out.println("建立一条新的连接： 当前连接身份是"+roleName+ "  当前总的连接数" + onlineNumber);
     }
     
-    private void addServerChatNum(String role, String userid) {
-    	if(Objects.equals("server", role)) {
-    		if(!DistributionUtil.serverSessionSequency.contains(userid)) {
-    			UserSequency userSequency = new UserSequency();
-    			DistributionUtil.serverSessionSequency.add(userSequency);
-    		}
-    	}
-	}
-    private void revomeServerChat(String role, String userid) {
-    	if(Objects.equals("client", role)) {
-    		String serveruserid = DistributionUtil.clientToServer.get(userid);
-    		if(DistributionUtil.serverSessionSequency.contains(serveruserid)) {
-    			for(UserSequency userSequency:DistributionUtil.serverSessionSequency) {
-    				if(Objects.equals(serveruserid, userSequency.getUserid()))
-    					userSequency.getNum().decrementAndGet();
-    			}
-    		}
-    	}else if(Objects.equals("server", role)) {
-    		if(DistributionUtil.serverSessionSequency.contains(userid)) {
-    			DistributionUtil.serverSessionSequency.remove(userid);
-    		}
-    	}
-	}
-	private List<Session> getSessions(String role,String userid){
-    	List<Session> sessions = null;
-        if(Objects.equals(role, "client")) {
-        	if(DistributionUtil.clientSession.containsKey(userid)) {
-        		sessions = new CopyOnWriteArrayList<Session>();
-        		DistributionUtil.clientSession.putIfAbsent(userid, sessions);
-        	}else {
-        		sessions = DistributionUtil.clientSession.get(userid);
-        	}
-        }else if(Objects.equals(role, "server")){
-        	if(DistributionUtil.serverSession.containsKey(userid)) {
-        		sessions = new CopyOnWriteArrayList<Session>();
-        		DistributionUtil.serverSession.putIfAbsent(userid, sessions);
-        	}else {
-        		sessions = DistributionUtil.serverSession.get(userid);
-        	}
-        }
-        return sessions;
-    }
-
     @OnClose
-    public void onClose(Session session,@PathParam("role")String role,@PathParam("userid")String userid)
-    {
+    public void onClose(Session session,
+    		@PathParam("role")String role,@PathParam("userid")String userid){
         onlineNumber--;
-        List<Session> sessions = getSessions(role, userid);
-        sessions.remove(session);
-        revomeServerChat(role, userid);
+        String roleName = null;
         if(Objects.equals(role, "client")) {
-        	DistributionUtil.clientToServer.remove(userid);
+        	roleName = "客户人员";
+        	distributionService.clientClose(userid);
         }else if(Objects.equals(role, "server")) {
-        	distributionService.reConnectNewServer(userid);
+        	roleName = "客服人员";
+        	distributionService.serverClose(userid);
         }
         System.out.println("关闭一条连接 当前连接数" + onlineNumber);
     }
 
     @OnMessage
-    public void onMessage(String message, Session session,@PathParam("role")String role,@PathParam("userid")String userid)
-    {
+    public void onMessage(String message, Session session,
+    		@PathParam("role")String role,@PathParam("userid")String userid){
     	if(Objects.equals(role, "client")) {
-    		distributionService.clientSendMessage(userid, message);
+    		distributionService.toClientSendMessage(userid, message);
         }else if(Objects.equals(role, "server")) {
         	ServerMessage serverMessage = GsonUtil.getGson().fromJson(message, ServerMessage.class);
-        	distributionService.serverSendMessage(serverMessage.getUserid(), serverMessage.getMessage());
+        	distributionService.toServerSendMessage(serverMessage.getUserid(), serverMessage.getMessage());
         }
     }
 

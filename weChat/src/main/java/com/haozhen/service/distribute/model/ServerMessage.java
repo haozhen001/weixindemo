@@ -1,9 +1,18 @@
 package com.haozhen.service.distribute.model;
 
+/**
+  * 用户信息实体
+ * @author haozhen
+ */
 public class ServerMessage {
-
-	public String userid;
 	
+	/**
+	 * 用户ID
+	 */
+	public String userid;
+	/**
+	 * 用户信息
+	 */
 	private String message;
 
 	public String getUserid() {

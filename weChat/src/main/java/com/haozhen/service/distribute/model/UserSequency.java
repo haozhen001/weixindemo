@@ -8,8 +8,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class UserSequency implements Comparable<UserSequency>{
 
+	/**
+	  * 客服用户ID
+	 */
 	private String userid;
 	
+	/**
+	  *客服连接数 
+	 */
 	private AtomicInteger num = new AtomicInteger(0);
 
 	public int compareTo(UserSequency o) {
@@ -24,7 +30,7 @@ public class UserSequency implements Comparable<UserSequency>{
 	@Override
 	public boolean equals(Object obj) {
 		UserSequency o = (UserSequency) obj;
-		if(this.userid.equals(o.userid) && this.num.equals(o.num)) {
+		if(this.userid.equals(o.userid)) {
 			return true;
 		}
 		return false;
