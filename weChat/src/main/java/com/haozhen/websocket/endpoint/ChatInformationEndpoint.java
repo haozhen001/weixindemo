@@ -1,8 +1,6 @@
 package com.haozhen.websocket.endpoint;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.websocket.OnClose;
 import javax.websocket.OnMessage;
@@ -16,7 +14,6 @@ import org.springframework.stereotype.Component;
 
 import com.haozhen.service.distribute.InformationDistributionService;
 import com.haozhen.service.distribute.model.ServerMessage;
-import com.haozhen.service.distribute.model.UserSequency;
 import com.haozhen.service.distribute.util.GsonUtil;
 
 @Component
@@ -66,7 +63,7 @@ public class ChatInformationEndpoint {
         	roleName = "客服人员";
         	distributionService.serverClose(userid);
         }
-        System.out.println("关闭一条连接 当前连接数" + onlineNumber);
+        System.out.println("关闭一条连接  当前连接身份是"+roleName+ " 当前连接数" + onlineNumber);
     }
 
     @OnMessage

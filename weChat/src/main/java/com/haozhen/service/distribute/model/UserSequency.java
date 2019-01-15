@@ -2,10 +2,14 @@ package com.haozhen.service.distribute.model;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import lombok.Getter;
+import lombok.Setter;
 
 
 
 
+@Getter
+@Setter
 public class UserSequency implements Comparable<UserSequency>{
 
 	/**
@@ -35,22 +39,5 @@ public class UserSequency implements Comparable<UserSequency>{
 		}
 		return false;
 	}
-	
-	public String getUserid() {
-		return userid;
-	}
-
-	public void setUserid(String userid) {
-		this.userid = userid;
-	}
-
-	public AtomicInteger getNum() {
-		return num;
-	}
-
-	public void setNum(AtomicInteger num) {
-		this.num = num;
-	}
-	
 	
 }

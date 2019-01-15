@@ -1,9 +1,14 @@
 package com.haozhen.service.distribute.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
   * 用户信息实体
  * @author haozhen
  */
+@Getter
+@Setter
 public class ServerMessage {
 	
 	/**
@@ -14,22 +19,6 @@ public class ServerMessage {
 	 * 用户信息
 	 */
 	private String message;
-
-	public String getUserid() {
-		return userid;
-	}
-
-	public void setUserid(String userid) {
-		this.userid = userid;
-	}
-
-	public String getMessage() {
-		return message;
-	}
-
-	public void setMessage(String message) {
-		this.message = message;
-	}
 	
 	
 }

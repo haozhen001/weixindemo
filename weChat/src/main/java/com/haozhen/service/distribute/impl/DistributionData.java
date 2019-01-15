@@ -1,6 +1,5 @@
 package com.haozhen.service.distribute.impl;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -9,7 +8,6 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.websocket.Session;
-import javax.websocket.server.ServerApplicationConfig;
 
 import org.springframework.stereotype.Component;
 
